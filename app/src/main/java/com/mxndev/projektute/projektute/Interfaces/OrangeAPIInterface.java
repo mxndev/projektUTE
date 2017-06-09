@@ -1,6 +1,6 @@
 package com.mxndev.projektute.projektute.Interfaces;
 
-import com.mxndev.projektute.projektute.Models.GeoLocation;
+import com.mxndev.projektute.projektute.Models.*;
 
 import retrofit2.*;
 import retrofit2.http.*;
