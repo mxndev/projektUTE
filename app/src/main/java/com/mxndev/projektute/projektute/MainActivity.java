@@ -1,11 +1,17 @@
 package com.mxndev.projektute.projektute;
 
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 
-import com.google.gson.*;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.mxndev.projektute.projektute.Interfaces.*;
 import com.mxndev.projektute.projektute.Models.*;
 
@@ -14,7 +20,7 @@ import butterknife.ButterKnife;
 import retrofit2.*;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     public static final String BASE_URL_ORANGE = "https://apitest.orange.pl";
     public static final String BASE_URL_GOOGLE = "https://maps.googleapis.com";
@@ -23,6 +29,7 @@ public class MainActivity extends AppCompatActivity {
     public static final String API_KEY_GOOGLE = " AIzaSyCTLCNDK0QllsYzOHtd7f-4UXRUov0w_o0";
     Retrofit orangeRetrofit, googleRetrofit;
     String stringLatitude, stringLongitude;
+    GoogleMap mMap;
 
     @BindView(R.id.latitudeTextView)
     TextView latitude;
@@ -32,6 +39,9 @@ public class MainActivity extends AppCompatActivity {
 
     @BindView(R.id.countGalleries)
     TextView countGalleries;
+
+    @BindView(R.id.countMuseum)
+    TextView countMuseum;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,8 +59,19 @@ public class MainActivity extends AppCompatActivity {
                 .baseUrl(BASE_URL_GOOGLE)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
 
         getLatLongFromGeoLocalization(null);
+    }
+
+    @Override
+    public void onMapReady(GoogleMap googleMap){
+        mMap = googleMap;
+
+        LatLng center = new LatLng(-34,151);
+        mMap.addMarker(new MarkerOptions().position(center).title("Nasza pozycja"));
+        mMap.moveCamera(CameraUpdateFactory.newLatLng(center));
     }
 
     void getLatLongFromGeoLocalization(View view)
@@ -60,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
                 latitude.setText("Szerokość geograficzna: ładowanie...");
                 longitude.setText("Długość geograficzna: ładowanie...");
                 countGalleries.setText("...");
+                countMuseum.setText("...");
             }
         }));
         OrangeAPIInterface apiService = orangeRetrofit.create(OrangeAPIInterface.class);
@@ -92,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }));
                 geDataArtGalleries(null);
+                getDataMuseum(null);
             }
 
             @Override
@@ -103,13 +126,33 @@ public class MainActivity extends AppCompatActivity {
     void geDataArtGalleries(View view)
     {
         GooglePlacesAPIInterface apiService = googleRetrofit.create(GooglePlacesAPIInterface.class);
-        Call<NearbyPlacesList> call = apiService.getArtGalleries(stringLatitude + "," + stringLongitude, "3000", "art_gallery", API_KEY_GOOGLE);
+        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "3000", "art_gallery", API_KEY_GOOGLE);
         call.enqueue(new Callback<NearbyPlacesList>() {
             @Override
             public void onResponse(Call<NearbyPlacesList> call, final Response<NearbyPlacesList> response) {
                 runOnUiThread (new Thread(new Runnable() {
                     public void run() {
                         countGalleries.setText(Integer.toString(response.body().getResults().size()));
+                    }
+                }));
+            }
+
+            @Override
+            public void onFailure(Call<NearbyPlacesList> call, Throwable t) {
+            }
+        });
+    }
+
+    void getDataMuseum(View view)
+    {
+        GooglePlacesAPIInterface apiService = googleRetrofit.create(GooglePlacesAPIInterface.class);
+        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "3000", "museum", API_KEY_GOOGLE);
+        call.enqueue(new Callback<NearbyPlacesList>() {
+            @Override
+            public void onResponse(Call<NearbyPlacesList> call, final Response<NearbyPlacesList> response) {
+                runOnUiThread (new Thread(new Runnable() {
+                    public void run() {
+                        countMuseum.setText(Integer.toString(response.body().getResults().size()));
                     }
                 }));
             }

@@ -13,5 +13,5 @@ import retrofit2.http.Query;
 public interface GooglePlacesAPIInterface
 {
     @GET("/maps/api/place/nearbysearch/json")
-    Call<NearbyPlacesList> getArtGalleries(@Query("location") String location, @Query("radius") String radius, @Query("types") String type, @Query("key") String apikey);
+    Call<NearbyPlacesList> getPlacesByType(@Query("location") String location, @Query("radius") String radius, @Query("types") String type, @Query("key") String apikey);
 }
