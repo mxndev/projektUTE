@@ -7,13 +7,13 @@ package com.mxndev.projektute.projektute.Models;
 public class NearbyPlaces
 {
     private String name;
-    private Location location;
+    private Geometry geometry;
+
+    public Geometry getGeometry() {
+        return geometry;
+    }
 
     public String getName() {
         return name;
-    }
-
-    public Location getLocation() {
-        return location;
     }
 }

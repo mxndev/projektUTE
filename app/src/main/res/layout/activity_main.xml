@@ -68,13 +68,12 @@
             android:onClick="getLatLongFromGeoLocalization"
             android:text="Odśwież pozycję" />
 
-        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-            android:id="@+id/map"
+        <fragment android:id="@+id/map"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:scrollbars="vertical"
-            class="com.google.android.gms.maps.SupportMapFragment"/>
+            class="com.google.android.gms.maps.MapFragment"/>
 
     </LinearLayout>
 

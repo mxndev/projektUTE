@@ -1,19 +1,16 @@
 package com.mxndev.projektute.projektute;
 
-import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.*;
 
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.*;
+import com.google.android.gms.maps.model.*;
 import com.mxndev.projektute.projektute.Interfaces.*;
 import com.mxndev.projektute.projektute.Models.*;
+
+import java.util.ArrayList;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -30,6 +27,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     Retrofit orangeRetrofit, googleRetrofit;
     String stringLatitude, stringLongitude;
     GoogleMap mMap;
+    ArrayList<Marker> googleMapMarkers;
+    ArrayList<NearbyPlaces> placesList;
 
     @BindView(R.id.latitudeTextView)
     TextView latitude;
@@ -50,6 +49,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         ButterKnife.bind(this);
 
+        placesList = new ArrayList<>();
+        googleMapMarkers = new ArrayList<>();
+
         orangeRetrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL_ORANGE)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .baseUrl(BASE_URL_GOOGLE)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
 
         getLatLongFromGeoLocalization(null);
@@ -68,10 +70,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap googleMap){
         mMap = googleMap;
-
-        LatLng center = new LatLng(-34,151);
-        mMap.addMarker(new MarkerOptions().position(center).title("Nasza pozycja"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(center));
     }
 
     void getLatLongFromGeoLocalization(View view)
@@ -91,28 +89,36 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onResponse(Call<GeoLocation> call, final Response<GeoLocation> response) {
                 runOnUiThread (new Thread(new Runnable() {
                     public void run() {
-                        latitude.setText("Szerokość geograficzna: " + response.body().getLatitude());
-                        longitude.setText("Długość geograficzna: " + response.body().getLongitude());
-
-                        if(response.body().getLatitude().toString().contains("N"))
-                        {
-                            stringLatitude = response.body().getLatitude().toString().substring(0,  response.body().getLatitude().toString().length() - 2);
-                        }
-                        else if(response.body().getLatitude().toString().contains("S"))
-                        {
-                            stringLatitude = "-"+ response.body().getLatitude().toString().substring(0,  response.body().getLatitude().toString().length() - 2);
-                        }
-
-                        if(response.body().getLongitude().toString().contains("E"))
-                        {
-                            stringLongitude = response.body().getLongitude().toString().substring(0,  response.body().getLongitude().toString().length() - 2);
-                        }
-                        else if(response.body().getLongitude().toString().contains("W"))
-                        {
-                            stringLongitude = "-"+ response.body().getLongitude().toString().substring(0,  response.body().getLongitude().toString().length() - 2);
-                        }
+                        latitude.setText("52.222556");//"Szerokość geograficzna: " + response.body().getLatitude());
+                        longitude.setText("21.016731");//"Długość geograficzna: " + response.body().getLongitude());
                     }
                 }));
+
+                /*if(response.body().getLatitude().toString().contains("N"))
+                {
+                    stringLatitude = response.body().getLatitude().toString().substring(0,  response.body().getLatitude().toString().length() - 2);
+                }
+                else if(response.body().getLatitude().toString().contains("S"))
+                {
+                    stringLatitude = "-"+ response.body().getLatitude().toString().substring(0,  response.body().getLatitude().toString().length() - 2);
+                }
+
+                if(response.body().getLongitude().toString().contains("E"))
+                {
+                    stringLongitude = response.body().getLongitude().toString().substring(0,  response.body().getLongitude().toString().length() - 2);
+                }
+                else if(response.body().getLongitude().toString().contains("W"))
+                {
+                    stringLongitude = "-"+ response.body().getLongitude().toString().substring(0,  response.body().getLongitude().toString().length() - 2);
+                }*/
+                stringLatitude = "52.222556";
+                stringLongitude = "21.016731";
+
+                LatLng center = new LatLng(Double.parseDouble(stringLatitude),Double.parseDouble(stringLongitude));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center, 13.5f));
+                mMap.addMarker(new MarkerOptions().position(center).title("Nasza pozycja"));
+
+                placesList.clear();
                 geDataArtGalleries(null);
                 getDataMuseum(null);
             }
@@ -126,13 +132,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     void geDataArtGalleries(View view)
     {
         GooglePlacesAPIInterface apiService = googleRetrofit.create(GooglePlacesAPIInterface.class);
-        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "3000", "art_gallery", API_KEY_GOOGLE);
+        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "1000", "art_gallery", API_KEY_GOOGLE);
         call.enqueue(new Callback<NearbyPlacesList>() {
             @Override
             public void onResponse(Call<NearbyPlacesList> call, final Response<NearbyPlacesList> response) {
                 runOnUiThread (new Thread(new Runnable() {
                     public void run() {
                         countGalleries.setText(Integer.toString(response.body().getResults().size()));
+                        if(response.body().getResults() != null){
+                            placesList.addAll(response.body().getResults());
+                        }
+                        showMarksOnMap();
+
+                    }
+                }));
+            }
+
+            @Override
+            public void onFailure(Call<NearbyPlacesList> call, Throwable t) {
+                int fdsf = 0;
+            }
+        });
+    }
+
+    void getDataMuseum(View view)
+    {
+        GooglePlacesAPIInterface apiService = googleRetrofit.create(GooglePlacesAPIInterface.class);
+        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "1000", "museum", API_KEY_GOOGLE);
+        call.enqueue(new Callback<NearbyPlacesList>() {
+            @Override
+            public void onResponse(Call<NearbyPlacesList> call, final Response<NearbyPlacesList> response) {
+                runOnUiThread (new Thread(new Runnable() {
+                    public void run() {
+                        countMuseum.setText(Integer.toString(response.body().getResults().size()));
+                        if(response.body().getResults() != null) {
+                            placesList.addAll(response.body().getResults());
+                        }
+                        showMarksOnMap();
                     }
                 }));
             }
@@ -143,23 +179,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
     }
 
-    void getDataMuseum(View view)
+    void showMarksOnMap()
     {
-        GooglePlacesAPIInterface apiService = googleRetrofit.create(GooglePlacesAPIInterface.class);
-        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "3000", "museum", API_KEY_GOOGLE);
-        call.enqueue(new Callback<NearbyPlacesList>() {
-            @Override
-            public void onResponse(Call<NearbyPlacesList> call, final Response<NearbyPlacesList> response) {
-                runOnUiThread (new Thread(new Runnable() {
-                    public void run() {
-                        countMuseum.setText(Integer.toString(response.body().getResults().size()));
-                    }
-                }));
-            }
-
-            @Override
-            public void onFailure(Call<NearbyPlacesList> call, Throwable t) {
-            }
-        });
+        for(Marker marker : googleMapMarkers)
+        {
+            marker.remove();
+        }
+        for(NearbyPlaces placeMarker : placesList)
+        {
+            LatLng center = new LatLng(Double.parseDouble(placeMarker.getGeometry().getLocation().getLat()),Double.parseDouble(placeMarker.getGeometry().getLocation().getLng()));
+            googleMapMarkers.add(mMap.addMarker(new MarkerOptions().position(center).title(placeMarker.getName())));
+        }
     }
 }

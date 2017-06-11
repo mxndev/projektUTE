@@ -5,14 +5,14 @@ package com.mxndev.projektute.projektute.Models;
  */
 
 public class Location {
-    int lat;
-    int lng;
+    String lat;
+    String lng;
 
-    public int getLat() {
+    public String getLat() {
         return lat;
     }
 
-    public int getLng() {
+    public String getLng() {
         return lng;
     }
 }
