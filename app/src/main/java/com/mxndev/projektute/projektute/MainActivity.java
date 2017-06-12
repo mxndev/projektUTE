@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     ArrayList<PlacesBase> placesList;
     ArrayList<String> listItems;
     ArrayAdapter<String> adapter;
+    int circle = 1000;
 
     @BindView(R.id.latitudeTextView)
     TextView latitude;
@@ -44,11 +45,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @BindView(R.id.countGalleries)
     TextView countGalleries;
 
-    @BindView(R.id.countMuseum)
-    TextView countMuseum;
+    @BindView(R.id.countThreaters)
+    TextView countTheatres;
 
     @BindView(R.id.placesListView)
     ListView placesListView;
+
+    @BindView(R.id.seekBarTextView)
+    TextView seekBarTextView;
 
     @BindView(R.id.placesListViewLayout)
     FrameLayout placesListViewLayout;
@@ -56,8 +60,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @BindView(R.id.switchGallery)
     Switch switchGallery;
 
-    @BindView(R.id.switchMuseum)
-    Switch switchMuseum;
+    @BindView(R.id.switchThreaters)
+    Switch switchThreaters;
+
+    @BindView(R.id.seekBarCircle)
+    SeekBar seekBarCircle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,13 +108,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 refreshPlacesList();
             }
         });
-        switchMuseum.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+        switchThreaters.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 showMarksOnMap();
                 refreshPlacesList();
             }
+        });
+
+        seekBarCircle.setOnSeekBarChangeListener( new SeekBar.OnSeekBarChangeListener() {
+
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                circle = (progress + 1)*1000;
+                seekBarTextView.setText((progress + 1)+" km");
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {}
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {}
+
         });
 
         getLatLongFromGeoLocalization(null);
@@ -125,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 latitude.setText("Szerokość geograficzna: ładowanie...");
                 longitude.setText("Długość geograficzna: ładowanie...");
                 countGalleries.setText("...");
-                countMuseum.setText("...");
+                countTheatres.setText("...");
             }
         }));
         OrangeAPIInterface apiService = orangeRetrofit.create(OrangeAPIInterface.class);
@@ -161,7 +184,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 //stringLongitude = "21.016731";
 
                 LatLng center = new LatLng(Double.parseDouble(stringLatitude),Double.parseDouble(stringLongitude));
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center, 13.5f));
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center, 13.5f - (0.37f*(circle / 1000))));
                 mMap.addMarker(new MarkerOptions().position(center).title("Nasza pozycja"));
 
                 placesList.clear();
@@ -178,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     void getDataArtGalleries()
     {
         GooglePlacesAPIInterface apiService = googleRetrofit.create(GooglePlacesAPIInterface.class);
-        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, "1000", "art_gallery", API_KEY_GOOGLE);
+        Call<NearbyPlacesList> call = apiService.getPlacesByType(stringLatitude + "," + stringLongitude, Integer.toString(circle), "art_gallery", API_KEY_GOOGLE);
         call.enqueue(new Callback<NearbyPlacesList>() {
             @Override
             public void onResponse(Call<NearbyPlacesList> call, final Response<NearbyPlacesList> response) {
@@ -204,13 +227,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     void getDataTheatres()
     {
         WarsawApiInterface apiService = warsawRetrofit.create(WarsawApiInterface.class);
-        Call<WarsawResult> call = apiService.getPlacesByType(ID_WARSAW, stringLongitude + "," + stringLatitude + ",1000", API_WARSAW);
+        Call<WarsawResult> call = apiService.getPlacesByType(ID_WARSAW, stringLongitude + "," + stringLatitude + "," + Integer.toString(circle), API_WARSAW);
         call.enqueue(new Callback<WarsawResult>() {
             @Override
             public void onResponse(Call<WarsawResult> call, final Response<WarsawResult> response) {
                 runOnUiThread (new Thread(new Runnable() {
                     public void run() {
-                        countMuseum.setText(Integer.toString(response.body().getResult().getFeatureMemberList().size()));
+                        countTheatres.setText(Integer.toString(response.body().getResult().getFeatureMemberList().size()));
                         if(response.body().getResult() != null) {
                             placesList.addAll(response.body().getResult().getFeatureMemberList());
                         }
@@ -243,7 +266,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
             else if (placeMarker instanceof WarsawFeatureList){
-                if(switchMuseum.isChecked()) {
+                if(switchThreaters.isChecked()) {
                     LatLng center = new LatLng(Double.parseDouble(((WarsawFeatureList) placeMarker).getGeometry().getCoordinates().get(0).getLatidute()),
                             Double.parseDouble(((WarsawFeatureList) placeMarker).getGeometry().getCoordinates().get(0).getLongidute()));
                     googleMapMarkers.add(mMap.addMarker(new MarkerOptions().position(center).title(getOrangeElementName(((WarsawFeatureList) placeMarker)))));
@@ -266,7 +289,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
             else if (placeMarker instanceof WarsawFeatureList)
             {
-                if(switchMuseum.isChecked()) {
+                if(switchThreaters.isChecked()) {
                     listItems.add(getOrangeElementName((WarsawFeatureList) placeMarker));
                 }
             }

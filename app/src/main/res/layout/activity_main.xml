@@ -60,16 +60,16 @@
                     android:id="@+id/textView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ilość obiektów - muzea: " />
+                    android:text="Ilość obiektów - teatry: " />
 
                 <TextView
-                    android:id="@+id/countMuseum"
+                    android:id="@+id/countThreaters"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="0" />
 
                 <Switch
-                    android:id="@+id/switchMuseum"
+                    android:id="@+id/switchThreaters"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text=" "
@@ -77,7 +77,31 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Promień: " />
+                <TextView
+                    android:id="@+id/seekBarTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1 km" />
+
+                <SeekBar
+                    android:id="@+id/seekBarCircle"
+                    style="@style/Widget.AppCompat.SeekBar.Discrete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="9"
+                    android:progress="0"
+                    android:layout_weight="1"/>
+
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
