@@ -4,7 +4,7 @@ package com.mxndev.projektute.projektute.Models;
  * Created by mixxe on 09.06.2017.
  */
 
-public class NearbyPlaces
+public class NearbyPlaces extends PlacesBase
 {
     private String name;
     private Geometry geometry;
